@@ -22,12 +22,12 @@ def confidence_to_certainty(conf):
 
 # ---- Sidebar ----
 st.sidebar.header("Input Parameters")
-st.sidebar.write("Leave any field blank to use default values.")
+st.sidebar.write("Fill in building features for prediction.")
 
 with st.sidebar.form("input_form"):
     st.subheader("Structural Features")
-    age = st.number_input("Building Age (years)", min_value=0, max_value=200, value=0, step=1)
-    floors = st.number_input("Number of Floors", min_value=1, max_value=10, value=1, step=1)
+    age = st.number_input("Building Age (years)", 0, 200, 20)
+    floors = st.number_input("Number of Floors", 1, 10, 2)
 
     st.subheader("Construction Details")
     foundation = st.selectbox("Foundation Type", ['mud', 'cement', 'other'])
@@ -42,7 +42,7 @@ with st.sidebar.form("input_form"):
 
 # ---- Main Panel ----
 st.title("Earthquake Building Damage Prediction")
-st.write("Predict potential building damage based on structural characteristics.")
+st.write("Predict potential building damage based on building features.")
 
 if submit:
     input_df = pd.DataFrame([{
@@ -68,7 +68,7 @@ if submit:
     with st.expander("See Technical Details"):
         st.write(f"Raw prediction confidence: **{confidence:.2%}**")
         st.caption(
-            "Note: In multi-class damage prediction, moderate confidence is expected due to overlapping damage categories."
+            "All predictions are model estimations. Use as a guide only."
         )
 
 st.markdown("---")
