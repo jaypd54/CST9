@@ -47,6 +47,7 @@ st.title("Earthquake Building Damage Prediction")
 st.write("Predict potential building damage based on structural characteristics.")
 
 if submit:
+    # Step 1: Create input from sidebar
     input_df = pd.DataFrame([{
         'age': age,
         'count_floors_pre_eq': floors,
@@ -57,19 +58,49 @@ if submit:
         'land_surface_condition': land_surface
     }])
 
-    label, confidence = predict_damage(input_df)
+    # Step 2: Load features.joblib to know all model columns
+    import joblib
+    feature_names = joblib.load('features.joblib')
+
+    # Step 3: Create a full DataFrame with all model features
+    full_input = pd.DataFrame(0, index=input_df.index, columns=feature_names)
+
+    # Step 4: Fill user-selected features into correct columns
+    for col in input_df.columns:
+        if col in full_input.columns:
+            # If it's categorical, do one-hot
+            if input_df[col].dtype == object:
+                cat_col = [c for c in feature_names if c.startswith(f"{col}_")]
+                for c in cat_col:
+                    if input_df[col][0] in c:
+                        full_input[c][0] = 1
+            else:
+                full_input[col][0] = input_df[col][0]
+
+    # Step 5: Predict
+    label, confidence = predict_damage(full_input)
+
+    # Convert confidence to certainty
+    def confidence_to_certainty(conf):
+        if conf < 0.35:
+            return "Low"
+        elif conf < 0.50:
+            return "Moderate"
+        elif conf < 0.65:
+            return "High"
+        else:
+            return "Very High"
+
     certainty = confidence_to_certainty(confidence)
 
+    # Step 6: Display
     st.markdown("---")
     st.header("Prediction Result")
-
-    # Display main prediction
     st.success(f"Predicted Damage Level: **{label.upper()}**")
-
-    # Additional information in columns for clarity
     col1, col2 = st.columns(2)
     col1.write(f"**Model Certainty:** {certainty}")
     col2.write(f"**Overall Model Accuracy:** {int(MODEL_ACCURACY * 100)}%")
+
 
     # Optional technical details
     with st.expander("See Technical Details"):
