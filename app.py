@@ -55,7 +55,6 @@ if submit:
         'land_surface_condition': land_surface
     }])
 
-    # Call prediction
     label, confidence = predict_damage(input_df)
     certainty = confidence_to_certainty(confidence)
 
@@ -66,7 +65,6 @@ if submit:
     col1.write(f"**Model Certainty:** {certainty}")
     col2.write(f"**Overall Model Accuracy:** {int(MODEL_ACCURACY * 100)}%")
 
-    # Optional technical details
     with st.expander("See Technical Details"):
         st.write(f"Raw prediction confidence: **{confidence:.2%}**")
         st.caption(
@@ -75,4 +73,3 @@ if submit:
 
 st.markdown("---")
 st.caption("All predictions are based on model estimation. Use as a guide, not a definitive assessment.")
-
