@@ -1,75 +1,41 @@
+# app.py
 import streamlit as st
-import pandas as pd
 from prediction import predict_damage
 
-st.set_page_config(
-    page_title="Earthquake Damage Predictor",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Earthquake Damage Predictor", layout="wide")
 
-MODEL_ACCURACY = 0.76  # 76%
+st.title("Earthquake Building Damage Prediction")
+st.write("Input building features to predict potential earthquake damage.")
 
-def confidence_to_certainty(conf):
-    if conf < 0.35:
-        return "Low"
-    elif conf < 0.50:
-        return "Moderate"
-    elif conf < 0.65:
-        return "High"
-    else:
-        return "Very High"
-
-# ---- Sidebar ----
+# --- Sidebar Inputs ---
 st.sidebar.header("Input Parameters")
-st.sidebar.write("Fill in building features for prediction.")
 
 with st.sidebar.form("input_form"):
-    st.subheader("Structural Features")
-    age = st.number_input("Building Age (years)", 0, 200, 20)
-    floors = st.number_input("Number of Floors", 1, 10, 2)
-
-    st.subheader("Construction Details")
-    foundation = st.selectbox("Foundation Type", ['mud', 'cement', 'other'])
-    roof = st.selectbox("Roof Type", ['bamboo', 'metal', 'concrete', 'other'])
-    ground = st.selectbox("Ground Floor Type", ['mud', 'cement', 'other'])
-
-    st.subheader("Position & Land")
-    position = st.selectbox("Building Position", ['attached', 'not_attached'])
-    land_surface = st.selectbox("Land Surface Condition", ['flat', 'slope', 'other'])
-
+    age_building = st.number_input("Building Age (years)", 0, 200, 20)
+    count_floors_pre_eq = st.number_input("Number of Floors", 1, 10, 2)
+    
+    foundation_type = st.selectbox("Foundation Type", ['Cement-Stone/Brick', 'Mud mortar-Stone/Brick', 'RC', 'Other'])
+    roof_type = st.selectbox("Roof Type", ['Bamboo/Timber-Light roof', 'RCC/RB/RBC'])
+    ground_floor_type = st.selectbox("Ground Floor Type", ['Mud', 'RC', 'Other', 'Timber'])
+    
+    position = st.selectbox("Position", ['Attached-2 side', 'Attached-3 side', 'Not attached'])
+    land_surface_condition = st.selectbox("Land Surface Condition", ['Flat', 'Moderate slope', 'Steep slope'])
+    
     submit = st.form_submit_button("Predict")
 
-# ---- Main Panel ----
-st.title("Earthquake Building Damage Prediction")
-st.write("Predict potential building damage based on building features.")
-
+# --- Main Panel ---
 if submit:
-    input_df = pd.DataFrame([{
-        'age': age,
-        'count_floors_pre_eq': floors,
-        'foundation_type': foundation,
-        'roof_type': roof,
-        'ground_floor_type': ground,
+    user_input = {
+        'age_building': age_building,
+        'count_floors_pre_eq': count_floors_pre_eq,
+        'foundation_type': foundation_type,
+        'roof_type': roof_type,
+        'ground_floor_type': ground_floor_type,
         'position': position,
-        'land_surface_condition': land_surface
-    }])
+        'land_surface_condition': land_surface_condition
+    }
 
-    label, confidence = predict_damage(input_df)
-    certainty = confidence_to_certainty(confidence)
+    label, confidence = predict_damage(user_input)
 
-    st.markdown("---")
-    st.header("Prediction Result")
-    st.success(f"Predicted Damage Level: **{label.upper()}**")
-    col1, col2 = st.columns(2)
-    col1.write(f"**Model Certainty:** {certainty}")
-    col2.write(f"**Overall Model Accuracy:** {int(MODEL_ACCURACY * 100)}%")
-
-    with st.expander("See Technical Details"):
-        st.write(f"Raw prediction confidence: **{confidence:.2%}**")
-        st.caption(
-            "All predictions are model estimations. Use as a guide only."
-        )
-
-st.markdown("---")
-st.caption("All predictions are based on model estimation. Use as a guide, not a definitive assessment.")
+    st.success(f"Predicted Damage Level: **{label}**")
+    st.write(f"Model Confidence: **{confidence:.2%}**")
