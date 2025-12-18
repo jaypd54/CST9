@@ -22,12 +22,12 @@ def confidence_to_certainty(conf):
 
 # ---- Sidebar ----
 st.sidebar.header("Input Parameters")
-st.sidebar.write("Provide the building details for prediction.")
+st.sidebar.write("Leave any field blank to use default values.")
 
 with st.sidebar.form("input_form"):
     st.subheader("Structural Features")
-    age = st.number_input("Building Age (years)", 0, 200, 20)
-    floors = st.number_input("Number of Floors", 1, 10, 2)
+    age = st.number_input("Building Age (years)", min_value=0, max_value=200, value=0, step=1)
+    floors = st.number_input("Number of Floors", min_value=1, max_value=10, value=1, step=1)
 
     st.subheader("Construction Details")
     foundation = st.selectbox("Foundation Type", ['mud', 'cement', 'other'])
