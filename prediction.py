@@ -1,19 +1,21 @@
 import joblib
 import pandas as pd
 
-# Load your pre-trained model and label encoder
-model = joblib.load('lightgbm_model.pkl')  # make sure this matches your GitHub file
-label_encoder = joblib.load('label_encoder.joblib')  # keep if your model uses it
+# Load model and label encoder
+model = joblib.load('lightgbm_model.pkl')        # Your trained LightGBM model
+label_encoder = joblib.load('label_encoder.joblib')  # Only if your model uses label encoding
+feature_names = joblib.load('features.joblib')  # List of features used during training
 
 def preprocess_input(input_df):
     """
-    Simplest preprocessing:
-    - Only keep the columns collected from Streamlit sidebar
-    - Encode categorical variables with one-hot encoding
+    Preprocess input from Streamlit sidebar:
+    - Keep numerical columns
+    - One-hot encode categorical columns
+    - Align with model features
     """
     df = input_df.copy()
 
-    # List of categorical columns from your sidebar
+    # Categorical columns from your sidebar
     categorical_cols = [
         'foundation_type',
         'roof_type',
@@ -22,34 +24,40 @@ def preprocess_input(input_df):
         'land_surface_condition'
     ]
 
-    # Convert categorical columns to string (safety)
+    # Convert to string and one-hot encode
     for col in categorical_cols:
         df[col] = df[col].astype(str)
+    df_cat = pd.get_dummies(df[categorical_cols], drop_first=True)
 
-    # One-hot encode categorical columns
-    df_categorical = pd.get_dummies(df[categorical_cols], drop_first=True)
-
-    # Keep numerical columns
+    # Numerical columns
     numerical_cols = ['age', 'count_floors_pre_eq']
-    df_numerical = df[numerical_cols].copy()
+    df_num = df[numerical_cols].copy()
 
     # Combine numerical and categorical
-    df_processed = pd.concat([df_numerical, df_categorical], axis=1)
+    processed_df = pd.concat([df_num, df_cat], axis=1)
 
-    return df_processed
+    # Align columns with model features
+    final_df = pd.DataFrame(0, index=processed_df.index, columns=feature_names)
+    for col in processed_df.columns:
+        if col in final_df.columns:
+            final_df[col] = processed_df[col]
+
+    return final_df
 
 def predict_damage(input_df):
-    # Preprocess input
+    """
+    Predict building damage level and confidence
+    """
     processed_df = preprocess_input(input_df)
 
     # Predict
     pred = model.predict(processed_df)
-    
+
     # Predict probability (confidence)
     if hasattr(model, "predict_proba"):
         confidence = model.predict_proba(processed_df).max()
     else:
-        confidence = 1.0  # fallback if model has no predict_proba
+        confidence = 1.0
 
     # Decode label if label_encoder exists
     if label_encoder:
@@ -58,4 +66,3 @@ def predict_damage(input_df):
         label = pred[0]
 
     return label, confidence
-
